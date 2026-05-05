@@ -1,22 +1,18 @@
 #pragma once
 
-#include "components/ILight.hpp"
+#include "components/ILightSource.hpp"
 #include "math/Color.hpp"
 #include "math/Vector3D.hpp"
 
 namespace Raytracer {
 
-class PointLight : public ILight {
+class PointLight : public ILightSource {
 public:
-    PointLight(const Vector3D& position, const Color& color, double intensity)
-        : _position(position), _color(color), _intensity(intensity) {}
+    PointLight() = default;
 
-    LightSample computeLight(const Point3D& hit_point) const override;
+    LightSample getSample(const Point3D& local_hit_point) const override;
 
 private:
-    Vector3D _position;
-    Color _color;
-    double _intensity;
 };
 
 } // namespace Raytracer
