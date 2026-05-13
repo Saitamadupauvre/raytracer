@@ -18,9 +18,15 @@ materials: (
 shapes: (
     { type = "plane"; position = { x = 0.0; y = -1.5; z = 0.0; }; material = "floor_white"; },
     { 
-        type = "import"; path = "scenes_/library/blueprints/light_sources/lantern.scene"; name = "lantern";
+        type = "import"; path = "scenes/library/blueprints/light_sources/lantern.scene"; name = "lantern";
         position = { x = 0.0; y = 1.0; z = 0.0; };
         rotation = { x = -10.0; y = 10.0; z = 10.0; };
+        scale = 1.0;
+    },
+    { 
+        type = "import"; path = "scenes/library/blueprints/objects/pyramid.scene"; name = "pyramid";
+        position = { x = 2.0; y = 1.0; z = 1.0; };
+        rotation = { x = 0.0; y = 0.0; z = 0.0; };
         scale = 1.0;
     },
 );
