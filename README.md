@@ -2,6 +2,20 @@
 
 A high-performance, plugin-based Raytracer built in C++20. This engine is designed for total extensibility, allowing users to dynamically load shapes, lights, and materials.
 
+> This is a school project completed as part of my Bachelor's coursework in Computer Science at Epitech.
+
+## What I did
+
+Group project (multiple teammates). I worked on the rendering/component architecture (entities, factories, scene management) alongside teammates who focused on specific plugins (materials, lights, shapes).
+
+## Skills
+
+- Ray-tracing rendering theory and implementation (camera, primitives, materials, lights, BSDFs)
+- C++20, plugin-based extensible architecture (dynamic shape/light/material loading)
+- CMake build systems and CI pipelines (GitHub Actions)
+- Entity/component and factory design patterns
+- Team collaboration on a large, spec-driven C++ codebase
+
 ---
 
 ## Getting Started
