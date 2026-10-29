@@ -1,0 +1,17 @@
+*.o
+*.a
+*.so
+*.ppm
+
+/build
+/coverage
+/plugins
+/raytracer
+/raytracer_unit_tests
+/logs
+/assets
+
+_*
+
+.vscode/*
+!.vscode/settings.json

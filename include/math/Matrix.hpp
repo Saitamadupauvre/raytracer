@@ -1,0 +1,301 @@
+#pragma once
+
+#include <algorithm>
+#include <cmath>
+
+#include "math/Vector3D.hpp"
+
+namespace Raytracer {
+
+/**
+ * @brief 4x4 Matrix class used for 3D transformations.
+ */
+class Matrix {
+public:
+    double m[4][4];
+
+    /**
+     * @brief Construct a new Matrix object natively initialized to Identity Matrix.
+     */
+    Matrix() noexcept {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                m[i][j] = (i == j) ? 1.0 : 0.0;
+            }
+        }
+    }
+
+    /**
+     * @brief Matrix-Matrix multiplication.
+     */
+    [[nodiscard]] Matrix operator*(const Matrix& other) const noexcept {
+        Matrix result;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                result.m[i][j] = 0;
+                for (int k = 0; k < 4; ++k) {
+                    result.m[i][j] += m[i][k] * other.m[k][j];
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Matrix-Vector multiplication (Transformation of points with translation).
+     */
+    [[nodiscard]] Vector3D operator*(const Vector3D& vec) const noexcept {
+        double x = m[0][0] * vec.x + m[0][1] * vec.y + m[0][2] * vec.z + m[0][3] * 1.0;
+        double y = m[1][0] * vec.x + m[1][1] * vec.y + m[1][2] * vec.z + m[1][3] * 1.0;
+        double z = m[2][0] * vec.x + m[2][1] * vec.y + m[2][2] * vec.z + m[2][3] * 1.0;
+        double w = m[3][0] * vec.x + m[3][1] * vec.y + m[3][2] * vec.z + m[3][3] * 1.0;
+
+        if (w != 0.0 && w != 1.0) {
+            return Vector3D(x / w, y / w, z / w);
+        }
+        return Vector3D(x, y, z);
+    }
+
+    /**
+     * @brief Transform a direction vector (no translation applied, only rotation/scale).
+     */
+    [[nodiscard]] Vector3D transformDirection(const Vector3D& vec) const noexcept {
+        double x = m[0][0] * vec.x + m[0][1] * vec.y + m[0][2] * vec.z;
+        double y = m[1][0] * vec.x + m[1][1] * vec.y + m[1][2] * vec.z;
+        double z = m[2][0] * vec.x + m[2][1] * vec.y + m[2][2] * vec.z;
+        return Vector3D(x, y, z);
+    }
+
+    /**
+     * @brief Generate a rotation matrix around the X-axis.
+     * @param angle_radians Angle in radians.
+     */
+    static Matrix rotateX(double angle_radians) noexcept {
+        Matrix result;
+        double c = std::cos(angle_radians);
+        double s = std::sin(angle_radians);
+        result.m[1][1] = c;
+        result.m[1][2] = -s;
+        result.m[2][1] = s;
+        result.m[2][2] = c;
+        return result;
+    }
+
+    /**
+     * @brief Generate a rotation matrix around the Y-axis.
+     * @param angle_radians Angle in radians.
+     */
+    static Matrix rotateY(double angle_radians) noexcept {
+        Matrix result;
+        double c = std::cos(angle_radians);
+        double s = std::sin(angle_radians);
+        result.m[0][0] = c;
+        result.m[0][2] = s;
+        result.m[2][0] = -s;
+        result.m[2][2] = c;
+        return result;
+    }
+
+    /**
+     * @brief Generate a rotation matrix around the Z-axis.
+     * @param angle_radians Angle in radians.
+     */
+    static Matrix rotateZ(double angle_radians) noexcept {
+        Matrix result;
+        double c = std::cos(angle_radians);
+        double s = std::sin(angle_radians);
+        result.m[0][0] = c;
+        result.m[0][1] = -s;
+        result.m[1][0] = s;
+        result.m[1][1] = c;
+        return result;
+    }
+
+    /**
+     * @brief Generates a transformation utility (LookAt).
+     * Transforms from world space to camera view space.
+     */
+    static Matrix
+    lookAt(const Point3D& position, const Point3D& target, const Vector3D& up) noexcept {
+        Vector3D forward = (position - target).normalized(); // z-axis
+        Vector3D right = up.cross(forward).normalized();     // x-axis
+        Vector3D new_up = forward.cross(right);              // y-axis
+
+        Matrix result;
+        result.m[0][0] = right.x;
+        result.m[0][1] = right.y;
+        result.m[0][2] = right.z;
+        result.m[0][3] = -right.dot(position);
+
+        result.m[1][0] = new_up.x;
+        result.m[1][1] = new_up.y;
+        result.m[1][2] = new_up.z;
+        result.m[1][3] = -new_up.dot(position);
+
+        result.m[2][0] = forward.x;
+        result.m[2][1] = forward.y;
+        result.m[2][2] = forward.z;
+        result.m[2][3] = -forward.dot(position);
+
+        result.m[3][0] = 0.0;
+        result.m[3][1] = 0.0;
+        result.m[3][2] = 0.0;
+        result.m[3][3] = 1.0;
+
+        return result;
+    }
+
+    /**
+     * @brief Generate a translation matrix.
+     * @param x Translation along X axis.
+     * @param y Translation along Y axis.
+     * @param z Translation along Z axis.
+     */
+    static Matrix translate(double x, double y, double z) noexcept {
+        Matrix result;
+        result.m[0][3] = x;
+        result.m[1][3] = y;
+        result.m[2][3] = z;
+        return result;
+    }
+
+    /**
+     * @brief Generate a scale matrix.
+     * @param sx Scale factor along X axis.
+     * @param sy Scale factor along Y axis.
+     * @param sz Scale factor along Z axis.
+     */
+    static Matrix scale(double sx, double sy, double sz) noexcept {
+        Matrix result;
+        result.m[0][0] = sx;
+        result.m[1][1] = sy;
+        result.m[2][2] = sz;
+        return result;
+    }
+
+    /**
+     * @brief Generate a shear matrix.
+     * @param xy X depends on Y
+     * @param xz X depends on Z
+     * @param yx Y depends on X
+     * @param yz Y depends on Z
+     * @param zx Z depends on X
+     * @param zy Z depends on Y
+     */
+    static Matrix shear(double xy, double xz, double yx, double yz, double zx, double zy) noexcept {
+        Matrix result;
+
+        result.m[0][1] = xy;
+        result.m[0][2] = xz;
+
+        result.m[1][0] = yx;
+        result.m[1][2] = yz;
+
+        result.m[2][0] = zx;
+        result.m[2][1] = zy;
+
+        return result;
+    }
+
+    /**
+     * @brief Generate a scale matrix with one argument.
+     *
+     * @param radius
+     * @return Matrix
+     */
+    static Matrix scale(double radius) noexcept {
+        Matrix result;
+        result.m[0][0] = radius;
+        result.m[1][1] = radius;
+        result.m[2][2] = radius;
+        return result;
+    }
+
+    /**
+     * @brief Transpose this matrix.
+     * @return Transposed matrix.
+     */
+    [[nodiscard]] Matrix transpose() const noexcept {
+        Matrix result;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                result.m[i][j] = m[j][i];
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Compute and return the inverse of this matrix.
+     * @return Inverse matrix. Returns identity if determinant is near zero.
+     */
+    [[nodiscard]] Matrix inverse() const noexcept {
+        Matrix inv;
+
+        double aug[4][8];
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                aug[i][j] = m[i][j];
+                aug[i][j + 4] = (i == j) ? 1.0 : 0.0;
+            }
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            int pivot = i;
+            for (int j = i + 1; j < 4; ++j) {
+                if (std::fabs(aug[j][i]) > std::fabs(aug[pivot][i])) {
+                    pivot = j;
+                }
+            }
+
+            if (pivot != i) {
+                for (int j = 0; j < 8; ++j) {
+                    std::swap(aug[i][j], aug[pivot][j]);
+                }
+            }
+
+            if (std::fabs(aug[i][i]) < 1e-15) {
+                return Matrix();
+            }
+
+            double diag = aug[i][i];
+            for (int j = 0; j < 8; ++j) {
+                aug[i][j] /= diag;
+            }
+
+            for (int j = 0; j < 4; ++j) {
+                if (j != i) {
+                    double factor = aug[j][i];
+                    for (int k = 0; k < 8; ++k) {
+                        aug[j][k] -= factor * aug[i][k];
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                inv.m[i][j] = aug[i][j + 4];
+            }
+        }
+
+        return inv;
+    }
+
+    /**
+     * @brief Check if the matrix is the identity matrix (with a small epsilon).
+     */
+    [[nodiscard]] bool isIdentity() const noexcept {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                double target = (i == j) ? 1.0 : 0.0;
+                if (std::abs(m[i][j] - target) > 1e-9) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+};
+
+} // namespace Raytracer
